@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Publicación - Chile Oscuro</title>
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+</head>
+<body class="dark-mode" style="display:flex; justify-content:center; align-items:center; min-height:100vh;">
+    <div class="modal-content" style="max-width: 550px; width: 100%;">
+        <h2 style="text-align:center; margin-bottom: 20px;">MODIFICAR INFORME</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <div style="display:flex; flex-direction:column; gap:15px;">
+                {{ form.as_p }}
+                <button type="submit" class="zona-btn" style="background:#c41e3a; color:#fff; text-align:center;">GUARDAR CAMBIOS</button>
+            </div>
+        </form>
+        <p style="text-align:center; margin-top:15px;"><a href="{% url 'foro' %}" style="color:#aaa; font-size:12px;">← Cancelar y volver al foro</a></p>
+    </div>
+</body>
+</html>

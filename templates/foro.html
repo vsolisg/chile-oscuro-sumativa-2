@@ -1,0 +1,139 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Foro Comunitario - Chile Oscuro</title>
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+</head>
+<body class="dark-mode">
+
+    <header class="main-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-text">
+                    <h1>CHILE OSCURO</h1>
+                    <p>BITÁCORA DE CASOS CIUDADANOS</p>
+                </div>
+            </div>
+            <div class="system-status">
+                {% if user.is_authenticated %}
+                    <span style="font-size:11px; color:#fff;">👤 {{ user.username }} {% if user.is_staff %}(ADMIN){% endif %}</span>
+                    <a href="{% url 'logout' %}" class="font-control-btn" style="text-decoration:none;">SALIR</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="font-control-btn" style="text-decoration:none;">INGRESAR</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+ <div class="container">
+        <main class="main-content">
+            <!-- Formulario de nueva publicación en el foro -->
+            {% if user.is_authenticated %}
+            <form method="POST" class="form-expediente">
+                {% csrf_token %}
+                <h3>PUBLICAR EN EL FORO</h3>
+                {{ form.titulo }}
+                {{ form.categoria }}
+                {{ form.contenido }}
+                <button type="submit">PUBLICAR</button>
+            </form>
+            {% else %}
+            <div style="background:#1a1a1a; border:1px dashed #c41e3a; padding:15px; margin-bottom:20px; text-align:center;">
+                <p>Inicia sesión para redactar publicaciones, dar likes y comentar.</p>
+                <a href="{% url 'login' %}" style="color:#c41e3a; font-weight:bold;">INGRESAR / REGISTRARSE</a>
+            </div>
+            {% endif %}
+
+            <!-- Feed de Publicaciones estilo Reddit -->
+            <section class="classified-section">
+                <h2>💬 RELATOS Y DEBATES DE LA COMUNIDAD ({{ categoria_actual }})</h2>
+
+                {% for post in posts %}
+                <article class="case-card" style="margin-bottom: 25px; padding: 20px; box-sizing: border-box;">
+    
+    <!-- Metadatos superiores (Categoría y Fecha) -->
+    <div class="case-metadata" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <span class="category-badge {{ post.categoria|lower }}">{{ post.get_categoria_display }}</span>
+        <span class="location" style="font-size: 11px; color: #888;">
+            Publicado por: <strong style="color: #fff;">{{ post.autor.username }}</strong> | {{ post.creado_en|date:"d/m/Y H:i" }}
+        </span>
+    </div>
+
+    <!-- Título alineado -->
+    <h3 style="margin: 0 0 15px 0; font-size: 18px; color: var(--color-red, #c41e3a); letter-spacing: 0.5px;">
+        {{ post.titulo }}
+    </h3>
+    
+    <!-- Cuerpo del texto con márgenes balanceados -->
+    <div style="background: rgba(0, 0, 0, 0.25); border-left: 2px solid #333; padding: 12px 16px; margin-bottom: 20px; font-size: 13.5px; color: #d1d1d1; line-height: 1.7; text-align: justify; white-space: pre-line;">
+        {{ post.contenido }}
+    </div>
+
+    <!-- Barra de acciones inferior -->
+    <div class="case-footer" style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid #222;">
+        <div>
+            <a href="{% url 'dar_like' post.id %}" class="font-control-btn" style="text-decoration: none; padding: 6px 12px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+                ▲ LIKE ({{ post.total_likes }})
+            </a>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            {% if user == post.autor or user.is_staff %}
+                <a href="{% url 'editar_post' post.id %}" class="font-control-btn" style="text-decoration: none; padding: 6px 12px; font-size: 11px;">EDITAR</a>
+                <a href="{% url 'eliminar_post' post.id %}" class="delete-btn" style="text-decoration: none; text-align: center; padding: 6px 12px; font-size: 11px;">ELIMINAR</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Caja de Comentarios con sangría visual ordenada -->
+    <div style="background: #111; padding: 15px; border-radius: 4px; margin-top: 15px; border: 1px solid #222;">
+        <h4 style="font-size: 11px; color: var(--color-red, #c41e3a); margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">
+            COMENTARIOS ({{ post.comentarios.count }})
+        </h4>
+        
+        {% for c in post.comentarios.all %}
+        <div style="font-size: 12px; border-bottom: 1px solid #1c1c1c; padding: 8px 0; color: #ccc;">
+            <strong style="color: #fff;">{{ c.autor.username }}:</strong> {{ c.texto }}
+        </div>
+        {% empty %}
+        <p style="font-size: 11px; color: #666; margin: 0;">No hay comentarios registrados en este informe.</p>
+        {% endfor %}
+
+        {% if user.is_authenticated %}
+        <form method="POST" action="{% url 'agregar_comentario' post.id %}" style="display: flex; gap: 10px; margin-top: 12px;">
+            {% csrf_token %}
+            <div style="flex: 1;">
+                {{ comentario_form.texto }}
+            </div>
+            <button type="submit" class="font-control-btn" style="background: #c41e3a; color: #fff; padding: 6px 14px; font-size: 11px; border: none; cursor: pointer;">
+                ENVIAR
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+</article>
+                {% endfor %}
+            </section>
+        </main>
+
+        <!-- Sidebar con Categorías del Foro y botón para volver a Expedientes -->
+        <aside class="sidebar">
+            <div style="margin-bottom: 15px;">
+                <a href="{% url 'inicio' %}" class="zona-btn" style="text-decoration:none; text-align:center;">📋 VOLVER A EXPEDIENTES</a>
+            </div>
+
+            <section class="regional-filter">
+                <h3>🏷️ CATEGORÍAS DEL FORO</h3>
+                <a href="{% url 'foro' %}" class="zona-btn" style="text-decoration:none;">🌐 VER TODAS</a>
+                <a href="{% url 'foro' %}?cat=PROPIO" class="ciudad-btn">↳ Relatos Propios</a>
+                <a href="{% url 'foro' %}?cat=PARANORMAL" class="ciudad-btn">↳ Paranormal</a>
+                <a href="{% url 'foro' %}?cat=TEORIA" class="ciudad-btn">↳ Teorías y Mitos</a>
+                <a href="{% url 'foro' %}?cat=DEBATE" class="ciudad-btn">↳ Debate</a>
+            </section>
+        </aside>
+    </div>
+
+</body>
+</html>

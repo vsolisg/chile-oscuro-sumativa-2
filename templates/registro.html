@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro - Chile Oscuro</title>
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+</head>
+<body class="dark-mode" style="display:flex; justify-content:center; align-items:center; min-height:100vh;">
+    <div class="modal-content" style="max-width: 400px; width: 100%;">
+        <h2 style="text-align:center; margin-bottom: 20px;">REGISTRO DE AGENTE</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <div style="display:flex; flex-direction:column; gap:15px;">
+                {{ form.as_p }}
+                <button type="submit" class="zona-btn" style="background:#2ecc71; color:#000; text-align:center;">CREAR CUENTA</button>
+            </div>
+        </form>
+        <p style="text-align:center; margin-top:15px; font-size:12px;">
+            ¿Ya tienes cuenta? <a href="{% url 'login' %}" style="color:#c41e3a;">Inicia sesión</a>
+        </p>
+    </div>
+</body>
+</html>

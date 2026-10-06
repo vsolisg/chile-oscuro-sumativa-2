@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chile Oscuro - Laboratorio de Análisis Paranormal</title>
+    <!-- Tu archivo CSS en static/css/ -->
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+</head>
+<body class="dark-mode">
+
+    <!-- ENCABEZADO -->
+    <header class="main-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23000'/%3E%3Cellipse cx='50' cy='50' rx='25' ry='15' fill='%23fff'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%23000'/%3E%3C/svg%3E" alt="logo" class="logo">
+                <div class="logo-text">
+                    <h1>CHILE OSCURO</h1>
+                    <p>LABORATORIO DE ANÁLISIS PARANORMAL</p>
+                </div>
+            </div>
+            
+            <!-- BUSCADOR -->
+            <form method="GET" action="{% url 'inicio' %}" class="search-box">
+                <input 
+                    type="text" 
+                    name="q" 
+                    placeholder="BUSCAR SUJETO / EXPEDIENTE..." 
+                    value="{{ busqueda }}"
+                />
+                <button type="submit" class="search-btn" aria-label="Buscar">🔍</button>
+            </form>
+
+            <!-- ACCESIBILIDAD Y SESIÓN -->
+            <div class="system-status">
+                {% if user.is_authenticated %}
+                    <span style="font-size: 11px; color: #fff; margin-right: 5px;">
+                        👤 {{ user.username }} {% if user.is_staff %}<b style="color:var(--color-red);">(ADMIN)</b>{% endif %}
+                    </span>
+                    <a href="{% url 'logout' %}" class="font-control-btn" style="text-decoration: none; padding: 4px 8px;">SALIR</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="font-control-btn" style="text-decoration: none; padding: 4px 8px;">INGRESAR</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="container">
+        <main class="main-content">
+            
+            <!-- FORMULARIO: Solo visible para usuarios autenticados -->
+            {% if user.is_authenticated %}
+            <form method="POST" class="form-expediente">
+                {% csrf_token %}
+                <h3>AGREGAR NUEVO EXPEDIENTE</h3>
+                {{ form.titulo }}
+                {{ form.tipo }}
+                {{ form.ubicacion }}
+                {{ form.descripcion }}
+                <button type="submit">GUARDAR</button>
+            </form>
+            {% endif %}
+
+            <!-- SECCIÓN DE EXPEDIENTES -->
+            <section class="classified-section">
+                <h2>📋 EXPEDIENTES CLASIFICADOS ({{ filtro_actual }})</h2>
+                
+                <div class="cases-grid">
+                    {% for caso in expedientes %}
+                    <article class="case-card">
+                        
+                        {% if caso.imagen %}
+                        <div class="case-image">
+                            <img src="{{ caso.imagen }}" alt="{{ caso.titulo }}">
+                            <div class="case-label">{{ caso.zona }}</div>
+                        </div>
+                        {% else %}
+                        <!-- Portada Minimalista -->
+                        <div class="classified-folder-cover">
+                            <div class="folder-top-bar">
+                                <span class="folder-agency">LABORATORIO DE ANÁLISIS PARANORMAL</span>
+                                <span class="folder-doc-id">DOC-{{ caso.id }}-X</span>
+                            </div>
+                            <div class="folder-center-seal">
+                                <div class="rubber-ink-stamp {{ caso.tipo|lower }}">
+                                    <div class="stamp-inner-border">
+                                        <span class="stamp-main">◎ REGISTRO FORENSE ◎</span>
+                                        <span class="stamp-sub">EVIDENCIA POLICIAL</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="folder-bottom-bar">
+                                <span class="folder-brand-title">CHILE OSCURO</span>
+                                <div class="folder-security-lines"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="case-metadata">
+                            <span class="category-badge {{ caso.tipo|lower }}">{{ caso.tipo }}</span>
+                            <span class="location">📍 {{ caso.ubicacion }}</span>
+                        </div>
+
+                        <h3>{{ caso.titulo }}</h3>
+                        
+                        <p class="classified-hint">
+                            <span class="hint-alert">🔒 CONTENIDO CLASIFICADO</span>
+                            <span class="hint-action">{{ caso.descripcion|truncatewords:20 }}</span>
+                        </p>
+
+                        <div class="case-footer">
+                            {% if user.is_staff or user.is_superuser %}
+                                <a href="{% url 'eliminar_expediente' caso.id %}" class="delete-btn" style="text-align:center; text-decoration:none;">ELIMINAR</a>
+                            {% else %}
+                                <span class="locked-archive">🔒 ARCHIVO PROTEGIDO</span>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% empty %}
+                    <p style="color:#aaa; padding: 20px;">No se encontraron expedientes con los criterios seleccionados.</p>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
+
+        <!-- PANEL LATERAL -->
+        <aside class="sidebar">
+            
+            <!-- NAVEGACIÓN PRINCIPAL / FORO -->
+            <div style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 6px;">
+                <a href="{% url 'inicio' %}" class="zona-btn" style="text-decoration:none; text-align:center; border-color: var(--color-red);">📋 EXPEDIENTES</a>
+                <a href="{% url 'foro' %}" class="zona-btn" style="text-decoration:none; text-align:center; background:#c41e3a; color:#fff;">💬 FORO COMUNIDAD</a>
+            </div>
+
+            <!-- FILTRO REGIONAL -->
+            <section class="regional-filter">
+                <h3>🗂️ FILTRO REGIONAL</h3>
+                
+                <a href="{% url 'inicio' %}" class="zona-btn" style="text-decoration:none;">🌐 MOSTRAR TODOS</a>
+
+                <!-- NORTE -->
+                <details>
+                    <summary class="zona-btn">▶ ZONA NORTE</summary>
+                    <a href="{% url 'inicio' %}?region=ARICA Y PARINACOTA" class="ciudad-btn">↳ ARICA Y PARINACOTA</a>
+                    <a href="{% url 'inicio' %}?region=TARAPACÁ" class="ciudad-btn">↳ TARAPACÁ</a>
+                    <a href="{% url 'inicio' %}?region=ANTOFAGASTA" class="ciudad-btn">↳ ANTOFAGASTA</a>
+                    <a href="{% url 'inicio' %}?region=ATACAMA" class="ciudad-btn">↳ ATACAMA</a>
+                    <a href="{% url 'inicio' %}?region=COQUIMBO" class="ciudad-btn">↳ COQUIMBO</a>
+                </details>
+
+                <!-- CENTRO -->
+                <details>
+                    <summary class="zona-btn">▶ ZONA CENTRO</summary>
+                    <a href="{% url 'inicio' %}?region=VALPARAÍSO" class="ciudad-btn">↳ VALPARAÍSO</a>
+                    <a href="{% url 'inicio' %}?region=METROPOLITANA" class="ciudad-btn">↳ METROPOLITANA</a>
+                    <a href="{% url 'inicio' %}?region=O'HIGGINS" class="ciudad-btn">↳ O'HIGGINS</a>
+                    <a href="{% url 'inicio' %}?region=MAULE" class="ciudad-btn">↳ MAULE</a>
+                    <a href="{% url 'inicio' %}?region=ÑUBLE" class="ciudad-btn">↳ ÑUBLE</a>
+                    <a href="{% url 'inicio' %}?region=BÍOBÍO" class="ciudad-btn">↳ BÍOBÍO</a>
+                </details>
+
+                <!-- SUR -->
+                <details>
+                    <summary class="zona-btn">▶ ZONA SUR</summary>
+                    <a href="{% url 'inicio' %}?region=LA ARAUCANÍA" class="ciudad-btn">↳ LA ARAUCANÍA</a>
+                    <a href="{% url 'inicio' %}?region=LOS RÍOS" class="ciudad-btn">↳ LOS RÍOS</a>
+                    <a href="{% url 'inicio' %}?region=LOS LAGOS" class="ciudad-btn">↳ LOS LAGOS</a>
+                </details>
+
+                <!-- AUSTRAL -->
+                <details>
+                    <summary class="zona-btn">▶ ZONA AUSTRAL</summary>
+                    <a href="{% url 'inicio' %}?region=AYSÉN" class="ciudad-btn">↳ AYSÉN</a>
+                    <a href="{% url 'inicio' %}?region=MAGALLANES Y DE LA ANTÁRTICA CHILENA" class="ciudad-btn">↳ MAGALLANES</a>
+                </details>
+            </section>
+        </aside>
+    </div>
+
+</body>
+</html>
